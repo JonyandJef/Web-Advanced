@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weather Dashboard</title>
+    <link rel="stylesheet" href="/src/css/style.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="logo">
+        <h1>Weather<span>Dash</span></h1>
+      </div>
+      <div class="controls">
+        <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme">
+          <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="app-container">
+      <aside class="sidebar">
+        <h2>Favorites</h2>
+        <ul id="favorites-list" class="favorites-list">
+          <!-- Favorites will be injected here -->
+          <li class="empty-state">No favorites yet</li>
+        </ul>
+      </aside>
+
+      <main class="main-content">
+        <section class="search-section">
+          <h2>Search Location</h2>
+          <!-- Search form will be implemented in Step 3 -->
+          <div class="placeholder-box">Search functionality coming in Step 3</div>
+        </section>
+
+        <section class="weather-display">
+          <h2>Current Weather</h2>
+          <!-- Weather data will be implemented in Step 2 -->
+          <div class="placeholder-box">Weather data coming in Step 2</div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/src/js/main.js"></script>
+  </body>
+</html>

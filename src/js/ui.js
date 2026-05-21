@@ -56,5 +56,92 @@ export const UI = {
     if (themeBtn) {
       themeBtn.addEventListener('click', UI.toggleTheme);
     }
+  },
+  
+  /**
+   * Render weather data to the DOM using template literals and array iteration
+   * @param {Object} location - Location object with name, country, etc.
+   * @param {Object} weatherData - Weather data from Open-Meteo
+   */
+  renderWeather: (location, weatherData) => {
+    const displayElement = document.getElementById('weather-display');
+    if (!displayElement) return;
+
+    const current = weatherData.current;
+    const hourly = weatherData.hourly;
+
+    // Technical Requirement: Template Literals
+    const cardHTML = `
+      <div class="weather-card">
+        <h3>${location.name}, ${location.country}</h3>
+        <div class="current-weather">
+          <div class="temp-big">${current.temperature_2m}°C</div>
+          <div class="weather-details">
+            <p>Feels like: ${current.apparent_temperature}°C</p>
+            <p>Precipitation: ${current.precipitation}mm</p>
+            <p>Wind: ${current.wind_speed_10m}km/h</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    let tableHTML = `
+      <div class="forecast-table-container">
+        <h3>24-Hour Forecast</h3>
+        <table class="forecast-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Temp (°C)</th>
+              <th>Feels Like (°C)</th>
+              <th>Precip. (mm)</th>
+              <th>Wind (km/h)</th>
+              <th>Wind Dir (°)</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    // Technical Requirement: Array iteration & iteration of data
+    // Create an array of 24 indices representing the next 24 hours
+    const next24Hours = Array.from({ length: 24 }, (_, i) => i);
+    
+    next24Hours.forEach(i => {
+        const timeStr = new Date(hourly.time[i]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        tableHTML += `
+            <tr>
+                <td>${timeStr}</td>
+                <td>${hourly.temperature_2m[i]}</td>
+                <td>${hourly.apparent_temperature[i]}</td>
+                <td>${hourly.precipitation[i]}</td>
+                <td>${hourly.wind_speed_10m[i]}</td>
+                <td>${hourly.wind_direction_10m[i]}</td>
+            </tr>
+        `;
+    });
+
+    tableHTML += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    // Update DOM
+    displayElement.innerHTML = `<h2>Current Weather</h2>` + cardHTML + tableHTML;
+  },
+  
+  /**
+   * Display error messages
+   */
+  showError: (message) => {
+    const displayElement = document.getElementById('weather-display');
+    if (displayElement) {
+        displayElement.innerHTML = `
+          <h2>Current Weather</h2>
+          <div class="error-box">
+             <p>Error: ${message}</p>
+          </div>
+        `;
+    }
   }
 };

@@ -172,7 +172,7 @@ export const UI = {
     const favButtonClass = isFavorite ? 'fav-btn active' : 'fav-btn';
 
     const cardHTML = `
-      <div class="weather-card">
+      <div class="weather-card fade-in">
         <div class="weather-header">
           <h3>${location.name}, ${location.country}</h3>
           <button class="${favButtonClass}" id="save-fav-btn">${favButtonText}</button>
@@ -228,7 +228,7 @@ export const UI = {
     };
 
     let tableHTML = `
-      <div class="forecast-table-container">
+      <div class="forecast-table-container fade-in">
         <div class="controls-bar">
           <h3>Forecast Data</h3>
           <div class="filter-group">
@@ -293,6 +293,18 @@ export const UI = {
         UI.toggleFavorite(location);
       });
     }
+
+    // Technical Requirement: Observer API
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
   },
   
   /**

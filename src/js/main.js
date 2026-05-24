@@ -13,6 +13,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize UI components and state
   UI.initTheme();
   UI.bindEvents();
+  UI.renderFavorites();
+  
+  document.addEventListener('loadWeather', async (e) => {
+    const { location } = e.detail;
+    try {
+      const weatherData = await WeatherAPI.getWeather(location.latitude, location.longitude);
+      UI.renderWeather(location, weatherData);
+    } catch (error) {
+      UI.showError(error.message);
+    }
+  });
   
   const searchForm = document.getElementById('search-form');
   const searchInput = document.getElementById('search-input');

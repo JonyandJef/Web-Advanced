@@ -56,16 +56,82 @@ export const UI = {
     StorageManager.saveTheme(newTheme);
   },
   
-  /**
-   * Bind event listeners to UI elements
-   */
   bindEvents: () => {
     // Technical Requirement: DOM manipulation (Events aan elementen koppelen)
     if (themeBtn) {
       themeBtn.addEventListener('click', UI.toggleTheme);
     }
+    
+    // Technical Requirement: Event Delegation
+    const favoritesList = document.getElementById('favorites-list');
+    if (favoritesList) {
+      favoritesList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-fav-btn')) {
+          e.stopPropagation();
+          const name = e.target.dataset.name;
+          let favorites = StorageManager.getFavorites();
+          favorites = favorites.filter(f => f.name !== name);
+          StorageManager.saveFavorites(favorites);
+          UI.renderFavorites();
+          
+          if (UI.state.location && UI.state.location.name === name) {
+            UI.renderWeatherView();
+          }
+        } else {
+          const item = e.target.closest('.favorite-item');
+          if (item) {
+            const location = {
+              name: item.dataset.name,
+              country: item.dataset.country,
+              latitude: item.dataset.lat,
+              longitude: item.dataset.lon
+            };
+            document.dispatchEvent(new CustomEvent('loadWeather', { detail: { location } }));
+          }
+        }
+      });
+    }
   },
   
+  toggleFavorite: (location) => {
+    let favorites = StorageManager.getFavorites();
+    const index = favorites.findIndex(f => f.name === location.name);
+    
+    if (index >= 0) {
+      favorites.splice(index, 1);
+    } else {
+      favorites.push({
+        name: location.name,
+        country: location.country,
+        latitude: location.latitude,
+        longitude: location.longitude
+      });
+    }
+    
+    StorageManager.saveFavorites(favorites);
+    UI.renderWeatherView(); 
+    UI.renderFavorites();   
+  },
+
+  renderFavorites: () => {
+    const listElement = document.getElementById('favorites-list');
+    if (!listElement) return;
+    
+    const favorites = StorageManager.getFavorites();
+    
+    if (favorites.length === 0) {
+      listElement.innerHTML = `<li class="empty-state">No favorites yet</li>`;
+      return;
+    }
+    
+    listElement.innerHTML = favorites.map(fav => `
+      <li class="favorite-item" data-lat="${fav.latitude}" data-lon="${fav.longitude}" data-name="${fav.name}" data-country="${fav.country}">
+        <span class="fav-name">${fav.name}, ${fav.country}</span>
+        <button class="remove-fav-btn" data-name="${fav.name}" aria-label="Remove favorite">&times;</button>
+      </li>
+    `).join('');
+  },
+
   /**
    * Render weather data to the DOM using template literals and array iteration
    * @param {Object} location - Location object with name, country, etc.
@@ -101,9 +167,16 @@ export const UI = {
     const location = UI.state.location;
 
     // Technical Requirement: Template Literals
+    const isFavorite = StorageManager.getFavorites().some(f => f.name === location.name);
+    const favButtonText = isFavorite ? '★ Saved' : '☆ Save to Favorites';
+    const favButtonClass = isFavorite ? 'fav-btn active' : 'fav-btn';
+
     const cardHTML = `
       <div class="weather-card">
-        <h3>${location.name}, ${location.country}</h3>
+        <div class="weather-header">
+          <h3>${location.name}, ${location.country}</h3>
+          <button class="${favButtonClass}" id="save-fav-btn">${favButtonText}</button>
+        </div>
         <div class="current-weather">
           <div class="temp-big">${current.temperature_2m}°C</div>
           <div class="weather-details">
@@ -212,6 +285,13 @@ export const UI = {
     const filterInput = document.getElementById('min-temp-filter');
     if (filterInput) {
       filterInput.addEventListener('input', UI.handleFilter);
+    }
+    
+    const favBtn = document.getElementById('save-fav-btn');
+    if (favBtn) {
+      favBtn.addEventListener('click', () => {
+        UI.toggleFavorite(location);
+      });
     }
   },
   

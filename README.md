@@ -37,3 +37,5 @@ A beautiful, interactive, and responsive Weather Dashboard built with Vanilla Ja
 
 ![Dashboard Overzicht](./screenshot-dashboard.png)
 ![Dashboard Dark Mode](./screenshot-darkmode.png)
+
+Used AI: https://gemini.google.com/share/776295b43639 

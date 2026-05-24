@@ -33,8 +33,13 @@
       <main class="main-content">
         <section class="search-section">
           <h2>Search Location</h2>
-          <!-- Search form will be implemented in Step 3 -->
-          <div class="placeholder-box">Search functionality coming in Step 3</div>
+          <form id="search-form" class="search-form">
+            <div class="search-group">
+              <input type="text" id="search-input" placeholder="Enter city name (e.g. London)..." required minlength="2">
+              <button type="submit" class="search-btn">Search</button>
+            </div>
+            <div id="search-error" class="search-error"></div>
+          </form>
         </section>
 
         <section class="weather-display" id="weather-display">

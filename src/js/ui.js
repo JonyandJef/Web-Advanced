@@ -11,6 +11,14 @@ const themeIcon = document.getElementById('theme-icon');
 const htmlElement = document.documentElement;
 
 export const UI = {
+  state: {
+    location: null,
+    weatherData: null,
+    sortCol: 'time',
+    sortAsc: true,
+    minTempFilter: ''
+  },
+  
   /**
    * Initialize theme based on saved preference
    */
@@ -64,11 +72,33 @@ export const UI = {
    * @param {Object} weatherData - Weather data from Open-Meteo
    */
   renderWeather: (location, weatherData) => {
-    const displayElement = document.getElementById('weather-display');
-    if (!displayElement) return;
+    UI.state.location = location;
+    UI.state.weatherData = weatherData;
+    UI.renderWeatherView();
+  },
 
-    const current = weatherData.current;
-    const hourly = weatherData.hourly;
+  handleSort: (column) => {
+    if (UI.state.sortCol === column) {
+      UI.state.sortAsc = !UI.state.sortAsc;
+    } else {
+      UI.state.sortCol = column;
+      UI.state.sortAsc = true;
+    }
+    UI.renderWeatherView();
+  },
+
+  handleFilter: (e) => {
+    UI.state.minTempFilter = e.target.value;
+    UI.renderWeatherView();
+  },
+
+  renderWeatherView: () => {
+    const displayElement = document.getElementById('weather-display');
+    if (!displayElement || !UI.state.weatherData) return;
+
+    const current = UI.state.weatherData.current;
+    const hourly = UI.state.weatherData.hourly;
+    const location = UI.state.location;
 
     // Technical Requirement: Template Literals
     const cardHTML = `
@@ -85,40 +115,84 @@ export const UI = {
       </div>
     `;
 
+    // Process data for the table (next 24 hours)
+    let forecastData = Array.from({ length: 24 }, (_, i) => ({
+      index: i,
+      time: new Date(hourly.time[i]),
+      timeStr: new Date(hourly.time[i]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      temp: hourly.temperature_2m[i],
+      feelsLike: hourly.apparent_temperature[i],
+      precip: hourly.precipitation[i],
+      wind: hourly.wind_speed_10m[i],
+      windDir: hourly.wind_direction_10m[i]
+    }));
+
+    // Filtering functionality
+    if (UI.state.minTempFilter !== '') {
+      const minTemp = parseFloat(UI.state.minTempFilter);
+      if (!isNaN(minTemp)) {
+        forecastData = forecastData.filter(item => item.temp >= minTemp);
+      }
+    }
+
+    // Sorting functionality
+    forecastData.sort((a, b) => {
+      let valA = a[UI.state.sortCol];
+      let valB = b[UI.state.sortCol];
+      if (UI.state.sortCol === 'time') {
+        valA = valA.getTime();
+        valB = valB.getTime();
+      }
+      
+      if (valA < valB) return UI.state.sortAsc ? -1 : 1;
+      if (valA > valB) return UI.state.sortAsc ? 1 : -1;
+      return 0;
+    });
+
+    const getSortIcon = (col) => {
+      if (UI.state.sortCol !== col) return '↕';
+      return UI.state.sortAsc ? '↑' : '↓';
+    };
+
     let tableHTML = `
       <div class="forecast-table-container">
-        <h3>24-Hour Forecast</h3>
+        <div class="controls-bar">
+          <h3>Forecast Data</h3>
+          <div class="filter-group">
+            <label for="min-temp-filter">Min Temp (°C):</label>
+            <input type="number" id="min-temp-filter" value="${UI.state.minTempFilter}" placeholder="e.g. 10">
+          </div>
+        </div>
         <table class="forecast-table">
           <thead>
             <tr>
-              <th>Time</th>
-              <th>Temp (°C)</th>
-              <th>Feels Like (°C)</th>
-              <th>Precip. (mm)</th>
-              <th>Wind (km/h)</th>
-              <th>Wind Dir (°)</th>
+              <th class="sortable" data-col="time">Time ${getSortIcon('time')}</th>
+              <th class="sortable" data-col="temp">Temp (°C) ${getSortIcon('temp')}</th>
+              <th class="sortable" data-col="feelsLike">Feels Like (°C) ${getSortIcon('feelsLike')}</th>
+              <th class="sortable" data-col="precip">Precip. (mm) ${getSortIcon('precip')}</th>
+              <th class="sortable" data-col="wind">Wind (km/h) ${getSortIcon('wind')}</th>
+              <th class="sortable" data-col="windDir">Wind Dir (°) ${getSortIcon('windDir')}</th>
             </tr>
           </thead>
           <tbody>
     `;
 
-    // Technical Requirement: Array iteration & iteration of data
-    // Create an array of 24 indices representing the next 24 hours
-    const next24Hours = Array.from({ length: 24 }, (_, i) => i);
-    
-    next24Hours.forEach(i => {
-        const timeStr = new Date(hourly.time[i]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (forecastData.length === 0) {
+      tableHTML += `<tr><td colspan="6" class="text-center" style="padding: 2rem;">No data matches your filters.</td></tr>`;
+    } else {
+      forecastData.forEach(item => {
         tableHTML += `
             <tr>
-                <td>${timeStr}</td>
-                <td>${hourly.temperature_2m[i]}</td>
-                <td>${hourly.apparent_temperature[i]}</td>
-                <td>${hourly.precipitation[i]}</td>
-                <td>${hourly.wind_speed_10m[i]}</td>
-                <td>${hourly.wind_direction_10m[i]}</td>
+                <td>${item.timeStr}</td>
+                <td>${item.temp}</td>
+                <td>${item.feelsLike}</td>
+                <td>${item.precip}</td>
+                <td>${item.wind}</td>
+                <td>${item.windDir}</td>
             </tr>
         `;
-    });
+      });
+    }
 
     tableHTML += `
           </tbody>
@@ -126,8 +200,19 @@ export const UI = {
       </div>
     `;
 
-    // Update DOM
     displayElement.innerHTML = `<h2>Current Weather</h2>` + cardHTML + tableHTML;
+
+    // Attach event listeners for sort and filter
+    document.querySelectorAll('.sortable').forEach(th => {
+      th.addEventListener('click', (e) => {
+        UI.handleSort(e.target.dataset.col);
+      });
+    });
+
+    const filterInput = document.getElementById('min-temp-filter');
+    if (filterInput) {
+      filterInput.addEventListener('input', UI.handleFilter);
+    }
   },
   
   /**
